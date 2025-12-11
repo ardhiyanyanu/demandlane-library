@@ -1,0 +1,86 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.backup
+release.properties
+.flattened-pom.xml
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
+# IDE - Visual Studio Code
+.vscode/
+*.code-workspace
+
+# IDE - NetBeans
+nbproject/
+.nb-gradle/
+nbbuild/
+nbdist/
+.nb-gradle-cache/
+
+# IDE - Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Gradle (if used)
+.gradle
+build/
+
+# JDK
+.java-version
+
+# Docker
+.dockerignore
+
+# Application
+*.log
+*.swp
+*.swo
+*~
+.env
+.env.local
+.env.*.local
+
+# Runtime
+*.jar.original
+*.pid
+*.sock
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Test coverage
+coverage/
+.coverage
+
+# Package files
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
