@@ -47,6 +47,10 @@ public class StaffController {
         @ApiResponse(responseCode = "409", description = "Email already exists in system")
     })
     public ResponseEntity<StaffCreateResponse> createStaff(@RequestBody StaffCreateRequest request) {
+        // checking if email already exists
+        if (userService.isEmailRegistered(request.email())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        }
         var newUser = userService.registerUser(new UserInput(
             request.name(),
             request.email(),

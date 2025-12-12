@@ -160,10 +160,11 @@ public class AuthController {
             String cleaned = permissionsJson.replaceAll("[\\[\\]\"]", "");
             String[] permissions = cleaned.split(",");
 
-            var permList = Arrays.asList(permissions);
-            // Remove empty strings
-            permList.removeIf(String::isBlank);
-            return permList;
+            // Trim whitespace and remove empty strings
+            return Arrays.stream(permissions)
+                    .map(String::trim)  // Add this to remove leading/trailing spaces
+                    .filter(s -> !s.isBlank())
+                    .collect(java.util.stream.Collectors.toList());
 
         } catch (Exception e) {
             logger.warn("Error parsing permissions: {}", e.getMessage());

@@ -26,7 +26,7 @@ public class Member {
     
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    private UserEntity userEntity;
 
     @Column(name = "address")
     private String address;
