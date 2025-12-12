@@ -5,22 +5,18 @@
     <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - traceId=%X{trace_id} spanId=%X{span_id} - %msg%n"/>
 
-    <!-- Console Appender with trace context -->
+    <!-- Console Appender with normal text format -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeContext>true</includeContext>
-            <includeMdc>true</includeMdc>
-            <customFields>{"service":"demandline-library"}</customFields>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- File Appender with trace context -->
+    <!-- File Appender with normal text format -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}</file>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeContext>true</includeContext>
-            <includeMdc>true</includeMdc>
-            <customFields>{"service":"demandline-library"}</customFields>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>

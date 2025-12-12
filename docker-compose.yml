@@ -1,12 +1,40 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: library-postgres
+    environment:
+      - POSTGRES_DB=library_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   app:
     build: .
     ports:
       - "8080-8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/library_db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_TRACES_SAMPLER_PROBABILITY=1.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
     networks:
       - library-network
     deploy:
@@ -28,8 +56,6 @@ services:
       - "13133:13133" # Health check
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    depends_on:
-      - prometheus
     networks:
       - library-network
     healthcheck:
@@ -42,4 +68,8 @@ services:
 networks:
   library-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
 

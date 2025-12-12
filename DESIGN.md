@@ -18,7 +18,7 @@ This document outlines the design and architecture of the Library Management Sys
 ## User Journey
 
 ### Admin Registration and Authentication
-- Admin login and get JWT token. (login is pre-seeded for development simplicity, can change using environment variables)
+- Admin login and get JWT token. (login is pre-seeded for development simplicity)
 - Admin create new library staff account with specific roles (password is inputted by admin to simplify development).
 - Library Staff can login and get JWT token.
 
@@ -110,21 +110,21 @@ Here is table schema for this system:
   - PUT /library/admin/staff/{id}: Update library staff information (permission ADMIN:UPDATE).
   - DELETE /library/admin/staff/{id}: Deactivate library staff account (permission ADMIN:DELETE).
 - Book Management:
-  - POST /library/admin/books: Add a new book (permission LIBRARIAN:CREATE).
-  - POST /library/admin/books/csv: Bulk insert and update multiple book (permission LIBRARIAN:CREATE).
-  - GET /library/admin/books: List all books (permission LIBRARIAN:READ).
-  - PUT /library/admin/books/{id}: Update book information (permission LIBRARIAN:UPDATE).
-  - DELETE /library/admin/books/{id}: Remove a book (permission LIBRARIAN:DELETE).
+  - POST /library/admin/books: Add a new book (permission BOOK:CREATE).
+  - POST /library/admin/books/csv: Bulk insert and update multiple book (permission BOOK:CREATE).
+  - GET /library/admin/books: List all books (permission BOOK:READ).
+  - PUT /library/admin/books/{id}: Update book information (permission BOOK:UPDATE).
+  - DELETE /library/admin/books/{id}: Remove a book (permission BOOK:DELETE).
 - Loan Management:
-  - POST /library/admin/loans/borrow: Borrow a book (permission FRONTDESK:CREATE).
-  - POST /library/admin/loans/return: Return a book (permission FRONTDESK:UPDATE).
-  - GET /library/admin/loans/member/{memberId}: View member's borrowing history (permission FRONTDESK:READ).
-  - GET /library/admin/loans/overdue: List all overdue loans (permission FRONTDESK:READ).
-  - GET /library/admin/loans/book/{bookId}: View all loans for a specific book (permission FRONTDESK:READ).
+  - POST /library/admin/loans/borrow: Borrow a book (permission BORROW:CREATE).
+  - POST /library/admin/loans/return: Return a book (permission BORROW:UPDATE).
+  - GET /library/admin/loans/member/{memberId}: View member's borrowing history (permission BORROW:READ).
+  - GET /library/admin/loans/overdue: List all overdue loans (permission BORROW:READ).
+  - GET /library/admin/loans/book/{bookId}: View all loans for a specific book (permission BORROW:READ).
 - Member Management:
-  - GET /library/admin/members: List all members (permission FRONTDESK:READ).
-  - PUT /library/admin/members/{id}: Update member information (permission FRONTDESK:UPDATE).
-  - DELETE /library/members/{id}: Deactivate member account (permission FRONTDESK:DELETE).
+  - GET /library/admin/members: List all members (permission MEMBER:READ).
+  - PUT /library/admin/members/{id}: Update member information (permission MEMBER:UPDATE).
+  - DELETE /library/members/{id}: Deactivate member account (permission MEMBER:DELETE).
 - Member Self-Service:
   - GET /library/member/me/loans: View own borrowing history (permission MEMBER:READ).
   - GET /library/member/me/books: View currently borrowed books (permission MEMBER:READ).
