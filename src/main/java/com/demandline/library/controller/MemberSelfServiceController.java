@@ -1,18 +1,16 @@
 package com.demandline.library.controller;
 
+import com.demandline.library.security.RequiresPermission;
 import com.demandline.library.service.LoanService;
 import com.demandline.library.service.MemberService;
 import com.demandline.library.service.model.LoanBook;
 import com.demandline.library.service.model.filter.LoanFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +36,7 @@ public class MemberSelfServiceController {
     }
 
     @GetMapping("/loans")
+    @RequiresPermission("MEMBER:READ")
     @Operation(
         summary = "View Own Borrowing History",
         description = "Retrieve complete borrowing history for authenticated member including active and returned books.",

@@ -1,5 +1,6 @@
 package com.demandline.library.controller;
 
+import com.demandline.library.security.RequiresPermission;
 import com.demandline.library.service.LoanService;
 import com.demandline.library.service.model.Loan;
 import com.demandline.library.service.model.LoanBook;
@@ -13,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +38,7 @@ public class LoanController {
     }
 
     @PostMapping("/borrow")
+    @RequiresPermission("BORROW:CREATE")
     @Operation(
         summary = "Borrow Book",
         description = "Process book borrowing for a member. System checks book availability and member eligibility. " +
@@ -64,6 +65,7 @@ public class LoanController {
     }
 
     @PostMapping("/return")
+    @RequiresPermission("BORROW:UPDATE")
     @Operation(
         summary = "Return Book",
         description = "Process book return for a member. System updates inventory and member's borrowing history. " +
@@ -93,6 +95,7 @@ public class LoanController {
     }
 
     @GetMapping("/member/{memberId}")
+    @RequiresPermission("BORROW:READ")
     @Operation(
         summary = "View Member's Borrowing History",
         description = "Retrieve complete borrowing history for a specific member including active and returned books.",
@@ -116,6 +119,7 @@ public class LoanController {
     }
 
     @GetMapping("/overdue")
+    @RequiresPermission("BORROW:READ")
     @Operation(
         summary = "List Overdue Loans",
         description = "Retrieve list of all overdue loans (where return_date is null and due_date has passed).",
@@ -137,6 +141,7 @@ public class LoanController {
     }
 
     @GetMapping("/book/{bookId}")
+    @RequiresPermission("BORROW:READ")
     @Operation(
         summary = "View All Loans for a Book",
         description = "Retrieve all loans (active and returned) for a specific book to track its borrowing history.",

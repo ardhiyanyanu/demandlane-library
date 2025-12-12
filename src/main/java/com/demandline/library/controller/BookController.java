@@ -1,5 +1,6 @@
 package com.demandline.library.controller;
 
+import com.demandline.library.security.RequiresPermission;
 import com.demandline.library.service.BookService;
 import com.demandline.library.service.model.Book;
 import com.demandline.library.service.model.filter.BookFilter;
@@ -37,6 +38,7 @@ public class BookController {
     }
 
     @PostMapping
+    @RequiresPermission("BOOK:CREATE")
     @Operation(
         summary = "Add New Book",
         description = "Add a single new book to the inventory with details such as title, author, ISBN, and quantity.",
@@ -59,6 +61,7 @@ public class BookController {
     }
 
     @PostMapping("/csv")
+    @RequiresPermission("BOOK:CREATE")
     @Operation(
         summary = "Bulk Insert/Update Books from CSV",
         description = "Bulk insert and update multiple books from a CSV file. CSV format: title,author,isbn,totalCopies",
@@ -81,6 +84,7 @@ public class BookController {
     }
 
     @GetMapping
+    @RequiresPermission("BOOK:READ")
     @Operation(
         summary = "List All Books",
         description = "Retrieve list of all books in the inventory with their details and availability status.",
@@ -107,6 +111,7 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("BOOK:UPDATE")
     @Operation(
         summary = "Update Book Information",
         description = "Update book information such as title, author, quantity, or availability status.",
@@ -132,6 +137,7 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("BOOK:DELETE")
     @Operation(
         summary = "Remove Book from Inventory",
         description = "Remove a book from the inventory. The book is marked as inactive instead of being deleted.",

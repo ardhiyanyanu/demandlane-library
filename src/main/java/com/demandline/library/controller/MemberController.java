@@ -1,5 +1,6 @@
 package com.demandline.library.controller;
 
+import com.demandline.library.security.RequiresPermission;
 import com.demandline.library.service.MemberService;
 import com.demandline.library.service.model.Member;
 import com.demandline.library.service.model.filter.MemberFilter;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +34,7 @@ public class MemberController {
     }
 
     @GetMapping
+    @RequiresPermission("MEMBER:READ")
     @Operation(
         summary = "List All Members",
         description = "Retrieve list of all registered members with their details and membership status.",
@@ -56,6 +57,7 @@ public class MemberController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("MEMBER:UPDATE")
     @Operation(
         summary = "Update Member Information",
         description = "Update member information such as name, email, phone number, or address.",
@@ -80,6 +82,7 @@ public class MemberController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("MEMBER:DELETE")
     @Operation(
         summary = "Deactivate Member Account",
         description = "Deactivate a member account. The member is marked as inactive instead of being deleted. " +

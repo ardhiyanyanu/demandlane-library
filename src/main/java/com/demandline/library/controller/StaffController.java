@@ -1,5 +1,6 @@
 package com.demandline.library.controller;
 
+import com.demandline.library.security.RequiresPermission;
 import com.demandline.library.service.UserService;
 import com.demandline.library.service.model.User;
 import com.demandline.library.service.model.input.UserInput;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +34,7 @@ public class StaffController {
     }
 
     @PostMapping("/create")
+    @RequiresPermission("ADMIN:CREATE")
     @Operation(
         summary = "Create New Library Staff Account",
         description = "Create a new library staff account with specific role. Admin can assign roles: Librarian, Front Desk Staff. Password is provided by admin.",
@@ -56,6 +57,7 @@ public class StaffController {
     }
 
     @GetMapping
+    @RequiresPermission("ADMIN:READ")
     @Operation(
         summary = "List All Library Staff",
         description = "Retrieve list of all library staff members with their roles and details.",
@@ -74,6 +76,7 @@ public class StaffController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("ADMIN:UPDATE")
     @Operation(
         summary = "Update Library Staff Information",
         description = "Update staff member information such as name, email, or role assignment.",
@@ -99,6 +102,7 @@ public class StaffController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("ADMIN:DELETE")
     @Operation(
         summary = "Deactivate Library Staff Account",
         description = "Deactivate a library staff account. The account is marked as inactive instead of being deleted.",
