@@ -21,6 +21,10 @@ spring:
     out-of-order: false
     validate-on-migrate: true
 
+library:
+  maxBooksPerMember: ${LIBRARY_MAX_BOOKS_PER_MEMBER:5}
+  loanPeriodDays: ${LIBRARY_LOAN_PERIOD_DAYS:14}
+
 # ...existing code...
 otel:
   exporter:

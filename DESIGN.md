@@ -75,6 +75,8 @@ Here is table schema for this system:
 - Members Table:
   - id (Primary Key) integer auto-increment
   - user_id (Foreign Key to Users Table)
+  - address
+  - phone_number
   - created_at
   - updated_at
 - Books Table:
@@ -127,7 +129,6 @@ Here is table schema for this system:
   - DELETE /library/members/{id}: Deactivate member account (permission MEMBER:DELETE).
 - Member Self-Service:
   - GET /library/member/me/loans: View own borrowing history (permission MEMBER:READ).
-  - GET /library/member/me/books: View currently borrowed books (permission MEMBER:READ).
 - Public Endpoints:
   - GET /library/public/books: Search and view available books (no authentication required).
 

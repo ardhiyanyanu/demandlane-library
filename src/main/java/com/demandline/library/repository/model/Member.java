@@ -27,6 +27,12 @@ public class Member {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "phone")
+    private String phoneNumber;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
