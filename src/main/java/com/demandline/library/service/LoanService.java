@@ -95,6 +95,21 @@ public class LoanService {
             }
 
             try {
+                if (loanInput.bookIds() == null || loanInput.bookIds().isEmpty()) {
+                    metricsService.incrementLoanFailure();
+                    throw new IllegalArgumentException("No books specified for loan");
+                }
+                if (loanInput.bookIds().size() > libraryConfiguration.getMaxBooksPerMember()) {
+                    metricsService.incrementLoanFailure();
+                    throw new IllegalArgumentException("Cannot loan more than " + libraryConfiguration.getMaxBooksPerMember() + " books at once");
+                }
+
+                // check if member have active loans at the moment
+                if (loanRepository.hasActiveLoan(loanInput.memberId())) {
+                    metricsService.incrementLoanFailure();
+                    throw new IllegalArgumentException("Member has active loans and cannot borrow more books");
+                }
+
                 // Fetch member
                 MemberEntity memberEntity = memberRepository.findById(loanInput.memberId())
                         .orElseThrow(() -> {
@@ -105,12 +120,6 @@ public class LoanService {
                 // Validate and process each book
                 List<LoanEntity> loanEntities = loanInput.bookIds().stream()
                         .map(bookId -> {
-                            // Check if member already has active loan for this book
-                            if (loanRepository.hasActiveLoan(loanInput.memberId(), bookId)) {
-                                metricsService.incrementLoanFailure();
-                                throw new IllegalArgumentException("Member already has active loan for book ID: " + bookId);
-                            }
-
                             // Fetch book with pessimistic lock to prevent race conditions
                             BookEntity bookEntity = bookRepository.findByIdWithLock(bookId)
                                     .orElseThrow(() -> {
@@ -203,7 +212,7 @@ public class LoanService {
         // Try to get the cached result
         String cachedResult = redisTemplate.opsForValue().get(redisKey);
         if (cachedResult == null) {
-            throw new IllegalArgumentException("Loan request not found or has expired: " + requestId);
+            return null;
         }
 
         try {
@@ -341,7 +350,7 @@ public class LoanService {
         // Try to get the cached result
         String cachedResult = redisTemplate.opsForValue().get(redisKey);
         if (cachedResult == null) {
-            throw new IllegalArgumentException("Return request not found or has expired: " + requestId);
+            return null;
         }
 
         try {

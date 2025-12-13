@@ -12,7 +12,7 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Front Desk Staff Role: Borrow/return and member management
 INSERT INTO roles (name, permissions) VALUES
-    ('FRONT_DESK_STAFF', '["BORROW:READ","BORROW:UPDATE","BORROW:DELETE","MEMBER:READ","MEMBER:UPDATE"]'::jsonb)
+    ('FRONT_DESK_STAFF', '["BORROW:CREATE","BORROW:READ","BORROW:UPDATE","BORROW:DELETE","MEMBER:READ","MEMBER:UPDATE","MEMBER:CREATE"]'::jsonb)
 ON CONFLICT (name) DO NOTHING;
 
 -- Member Role: Read-only member information

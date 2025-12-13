@@ -1,44 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <springProperty name="LOG_FILE" source="logging.file.name" defaultValue="logs/app.log"/>
+    <springProperty name="LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
 
-    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}"/>
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - traceId=%X{trace_id} spanId=%X{span_id} - %msg%n"/>
-
-    <!-- Console Appender with normal text format -->
+    <!-- Console Appender with JSON format -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>traceFlags</includeMdcKeyName>
         </encoder>
     </appender>
 
-    <!-- File Appender with normal text format -->
+    <!-- File Appender for persistent logging -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}</file>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>traceFlags</includeMdcKeyName>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>14</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
     </appender>
 
-    <!-- Root logger -->
-    <root level="INFO">
+    <!-- OpenTelemetry Logback Appender for OTLP export -->
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <!-- Capture experimental attributes -->
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+        <!-- Capture source code location attributes -->
+        <captureCodeAttributes>true</captureCodeAttributes>
+    </appender>
+
+    <!-- Spring profiles for different environments -->
+    <springProfile name="dev,local">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="OTEL"/>
+        </root>
+        <!-- Debug specific packages -->
+        <logger name="com.demandline.library" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="docker,prod">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="OTEL"/>
+        </root>
+        <!-- Production logging configuration -->
+        <logger name="com.demandline.library" level="INFO"/>
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.springframework.security" level="INFO"/>
+    </springProfile>
+
+    <!-- Default profile -->
+    <root level="${LOG_LEVEL}">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="OTEL"/>
     </root>
 
-    <!-- Application logger with DEBUG level -->
-    <logger name="com.demandline.library" level="DEBUG"/>
+    <!-- Specific logger configurations -->
+    <logger name="org.springframework.boot.actuate.autoconfigure.metrics" level="WARN"/>
+    <logger name="org.springframework.data.jpa" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
 
-    <!-- OpenTelemetry logger -->
-    <logger name="io.opentelemetry" level="INFO"/>
-
-    <!-- Spring logger -->
-    <logger name="org.springframework" level="INFO"/>
 </configuration>
 

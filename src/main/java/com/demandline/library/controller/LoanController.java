@@ -27,7 +27,7 @@ import java.util.List;
  * Requires BORROW and MEMBER related permissions based on operation
  */
 @RestController
-@RequestMapping("/library/admin/loans")
+@RequestMapping("/api/loans")
 @Tag(name = "Loan Management", description = "Book borrowing and returning operations (Front Desk Staff access)")
 @SecurityRequirement(name = "Bearer Authentication")
 public class LoanController {
@@ -59,7 +59,7 @@ public class LoanController {
         }
         loanResult = loanService.loanBooks(new LoanInput(
                 request.memberId,
-                request.bookId
+                request.bookIds
         ));
         return ResponseEntity.status(HttpStatus.CREATED).body(new LoanCreateResponse(loanResult));
     }
@@ -166,7 +166,7 @@ public class LoanController {
     // Request/Response DTOs
     public record BorrowRequest(
         Integer memberId,
-        List<Integer> bookId,
+        List<Integer> bookIds,
         String requestId
     ) {}
 

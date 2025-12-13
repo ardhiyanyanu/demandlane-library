@@ -36,6 +36,19 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: library-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus metrics
+    networks:
+      - library-network
+
   app:
     build: .
     ports:
@@ -52,14 +65,19 @@ services:
       - REDIS_DATABASE=0
       - LIBRARY_MAX_BOOKS_PER_MEMBER=3
       - LIBRARY_LOAN_PERIOD_DAYS=7
+      # Send telemetry to local otel-collector
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      # Enable all telemetry exporters
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER_PROBABILITY=1.0
+      - OTEL_SERVICE_NAME=library-management-service
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      otel-collector:
         condition: service_healthy
     networks:
       - library-network
@@ -70,27 +88,6 @@ services:
         delay: 5s
         max_attempts: 3
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    ports:
-      - "4317:4317"   # OTLP gRPC receiver
-      - "4318:4318"   # OTLP HTTP receiver
-      - "8888:8888"   # Prometheus metrics exposed by the collector
-      - "8889:8889"   # Prometheus exporter
-      - "13133:13133" # Health check
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    networks:
-      - library-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:13133/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-
 networks:
   library-network:
     driver: bridge
@@ -100,4 +97,3 @@ volumes:
     driver: local
   redis_data:
     driver: local
-

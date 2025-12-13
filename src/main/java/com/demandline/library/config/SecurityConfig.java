@@ -44,31 +44,31 @@ public class SecurityConfig {
             
             // Configure endpoint authorization
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints - no authentication required
-                .requestMatchers("/library/auth/login").permitAll()
-                .requestMatchers("/library/auth/member/register").permitAll()
+                // Public endpoints - no authentication required (both /library and /api paths)
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/register/member").permitAll()
                 .requestMatchers("/library/public/**").permitAll()
                 
                 // Swagger/OpenAPI endpoints
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger.html").permitAll()
                 
                 // Actuator endpoints
                 .requestMatchers("/actuator/**").permitAll()
                 
-                // Admin endpoints - require ROLE_ADMIN
-                .requestMatchers("/library/admin/staff/**").authenticated()
-                
-                // Book management - require ROLE_LIBRARIAN
-                .requestMatchers("/library/admin/books/**").authenticated()
-                
-                // Loan management - require ROLE_FRONT_DESK_STAFF
-                .requestMatchers("/library/admin/loans/**").authenticated()
-                
-                // Member management - require ROLE_FRONT_DESK_STAFF
-                .requestMatchers("/library/admin/members/**").authenticated()
-                
+                // Admin endpoints - require authentication (both /library and /api paths)
+                .requestMatchers("/api/admin/staff/**").authenticated()
+
+                // Book management - require authentication (both /library and /api paths)
+                .requestMatchers("/api/books/**").authenticated()
+
+                // Loan management - require authentication (both /library and /api paths)
+                .requestMatchers("/api/loans/**").authenticated()
+
+                // Member management - require authentication (both /library and /api paths)
+                .requestMatchers("/api/members/**").authenticated()
+
                 // Member self-service - require ROLE_MEMBER
                 .requestMatchers("/library/member/me/**").authenticated()
                 

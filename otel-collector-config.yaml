@@ -1,0 +1,84 @@
+# OpenTelemetry Collector Configuration
+# Sends metrics, logs, and traces to Grafana Cloud via OTLP
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Scrape Spring Boot Actuator metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'library-app'
+          scrape_interval: 15s
+          metrics_path: '/actuator/prometheus'
+          static_configs:
+            - targets:
+              - 'demandlane-library-app-1:8080'
+              - 'demandlane-library-app-2:8080'
+              - 'demandlane-library-app-3:8080'
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  resource:
+    attributes:
+      - key: service.name
+        value: library-management-service
+        action: upsert
+      - key: deployment.environment
+        value: production
+        action: upsert
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+exporters:
+  # Send all telemetry to Grafana Cloud via OTLP HTTP
+  otlphttp/grafana:
+    endpoint: https://otlp-gateway-prod-ap-southeast-2.grafana.net/otlp
+    headers:
+      Authorization: Basic Z2xjX2V5SnZJam9pTVRZeE56RXlPQ0lzSW00aU9pSm5jbUZtWVc1aExYUnZhMlZ1TFhSbGMzUWlMQ0pySWpvaU1teHdlVFJ2V1d3eVlWbGtOVFl4ZGprNU9VWlFkRFJSSWl3aWJTSTZleUp5SWpvaWNISnZaQzFoY0MxemIzVjBhR1ZoYzNRdE1pSjlmUT09OjE0Njg2OTE=
+
+
+  # Debug exporter for troubleshooting (optional)
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/grafana, debug]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/grafana, debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/grafana, debug]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: detailed
+

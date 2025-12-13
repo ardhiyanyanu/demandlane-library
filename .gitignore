@@ -7,6 +7,9 @@ pom.xml.backup
 release.properties
 .flattened-pom.xml
 
+# Environment variables with secrets
+.env
+
 # IDE - IntelliJ
 .idea/
 *.iml

@@ -27,7 +27,7 @@ import java.util.Optional;
  * Requires BOOK related permissions based on operation
  */
 @RestController
-@RequestMapping("/library/admin/books")
+@RequestMapping("/api/books")
 @Tag(name = "Book Management", description = "Book inventory management endpoints (Librarian access)")
 @SecurityRequirement(name = "Bearer Authentication")
 public class BookController {

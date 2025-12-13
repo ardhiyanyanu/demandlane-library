@@ -23,7 +23,7 @@ import java.util.List;
  * Requires ADMIN role for all operations
  */
 @RestController
-@RequestMapping("/library/admin/staff")
+@RequestMapping("/api/staff")
 @Tag(name = "Admin - Staff Management", description = "Library staff account management endpoints (Admin only)")
 @SecurityRequirement(name = "Bearer Authentication")
 public class StaffController {

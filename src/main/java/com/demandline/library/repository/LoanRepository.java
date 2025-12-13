@@ -58,6 +58,15 @@ public interface LoanRepository extends JpaRepository<LoanEntity, Integer> {
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END " +
            "FROM LoanEntity l WHERE l.memberEntity.id = :memberId AND l.bookEntity.id = :bookId AND l.returnDate IS NULL")
     boolean hasActiveLoan(@Param("memberId") Integer memberId, @Param("bookId") Integer bookId);
+
+    /**
+     * Check if a member has an active loan for a specific book
+     * @param memberId the member id
+     * @return true if member has active loan for this book
+     */
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END " +
+            "FROM LoanEntity l WHERE l.memberEntity.id = :memberId AND l.returnDate IS NULL")
+    boolean hasActiveLoan(@Param("memberId") Integer memberId);
     
     /**
      * Find a specific active loan by member and book

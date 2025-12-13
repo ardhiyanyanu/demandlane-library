@@ -23,7 +23,7 @@ import java.util.Optional;
  * Requires MEMBER related permissions based on operation
  */
 @RestController
-@RequestMapping("/library/admin/members")
+@RequestMapping("/api/members")
 @Tag(name = "Member Management", description = "Member registration and management endpoints (Front Desk Staff access)")
 @SecurityRequirement(name = "Bearer Authentication")
 public class MemberController {
@@ -54,6 +54,46 @@ public class MemberController {
                 Optional.ofNullable(searchEmail)
         ), size, page * size);
         return ResponseEntity.ok(members.stream().map(MemberResponse::new).toList());
+    }
+
+    @GetMapping("/{id}")
+    @RequiresPermission("MEMBER:READ")
+    @Operation(
+        summary = "Get Member by ID",
+        description = "Retrieve detailed information about a specific member by their ID.",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Member information retrieved successfully"),
+        @ApiResponse(responseCode = "403", description = "Insufficient permissions (MEMBER:READ required)"),
+        @ApiResponse(responseCode = "404", description = "Member not found")
+    })
+    public ResponseEntity<MemberResponse> getMemberById(@Parameter(description = "Member ID") @PathVariable String id) {
+        var member = memberService.getMemberById(id);
+        return ResponseEntity.ok(new MemberResponse(member));
+    }
+
+    @PostMapping
+    @RequiresPermission("MEMBER:CREATE")
+    @Operation(
+        summary = "Create New Member",
+        description = "Register a new library member. Front desk staff can create member accounts with this endpoint.",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Member created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters or email already exists"),
+        @ApiResponse(responseCode = "403", description = "Insufficient permissions (MEMBER:READ required)")
+    })
+    public ResponseEntity<MemberCreateResponse> createMember(@RequestBody MemberCreateRequest request) {
+        var member = memberService.createMember(new com.demandline.library.service.model.input.MemberInput(
+                request.name(),
+                request.email(),
+                request.password(),
+                request.address(),
+                request.phoneNumber()
+        ));
+        return ResponseEntity.ok(new MemberCreateResponse(member.id(), member.user().email()));
     }
 
     @PutMapping("/{id}")
@@ -101,6 +141,19 @@ public class MemberController {
     }
 
     // Request/Response DTOs
+    public record MemberCreateRequest(
+        String name,
+        String email,
+        String password,
+        String address,
+        String phoneNumber
+    ) {}
+
+    public record MemberCreateResponse(
+        Integer memberId,
+        String email
+    ) {}
+
     public record MemberUpdateRequest(
         String name,
         String email,

@@ -24,7 +24,7 @@ import java.util.Arrays;
  * Handles user authentication and member self-registration endpoints
  */
 @RestController
-@RequestMapping("/library/auth")
+@RequestMapping("/api/auth")
 @Slf4j
 @Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {

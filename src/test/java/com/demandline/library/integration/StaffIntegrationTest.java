@@ -57,7 +57,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -80,7 +80,7 @@ public class StaffIntegrationTest {
                 String.valueOf(librarianRole.getId())
         );
 
-        var createResult = mockMvc.perform(post("/library/admin/staff/create")
+        var createResult = mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
@@ -94,7 +94,7 @@ public class StaffIntegrationTest {
         // Step 3: New librarian can login
         var newLibrarianLogin = new AuthController.LoginRequest("newlibrarian@library.local", "librarian456");
 
-        mockMvc.perform(post("/library/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newLibrarianLogin)))
                 .andExpect(status().isOk())
@@ -108,7 +108,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -126,7 +126,7 @@ public class StaffIntegrationTest {
                 String.valueOf(frontDeskRole.getId())
         );
 
-        mockMvc.perform(post("/library/admin/staff/create")
+        mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
@@ -136,7 +136,7 @@ public class StaffIntegrationTest {
         // Step 3: New front desk staff can login
         var newFrontDeskLogin = new AuthController.LoginRequest("newfrontdesk@library.local", "frontdesk456");
 
-        mockMvc.perform(post("/library/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newFrontDeskLogin)))
                 .andExpect(status().isOk())
@@ -149,7 +149,7 @@ public class StaffIntegrationTest {
         // Step 1: Librarian login (from migration data)
         var loginRequest = new AuthController.LoginRequest("librarian@library.local", "librarian123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -167,7 +167,7 @@ public class StaffIntegrationTest {
                 String.valueOf(librarianRole.getId())
         );
 
-        mockMvc.perform(post("/library/admin/staff/create")
+        mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + librarianToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
@@ -179,7 +179,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -189,7 +189,7 @@ public class StaffIntegrationTest {
                 .get("token").asText();
 
         // Step 2: Admin lists all staff
-        mockMvc.perform(get("/library/admin/staff")
+        mockMvc.perform(get("/api/staff")
                 .header("Authorization", "Bearer " + adminToken)
                 .param("limit", "100")
                 .param("offset", "0"))
@@ -204,7 +204,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -222,7 +222,7 @@ public class StaffIntegrationTest {
                 String.valueOf(librarianRole.getId())
         );
 
-        var createResult = mockMvc.perform(post("/library/admin/staff/create")
+        var createResult = mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
@@ -241,7 +241,7 @@ public class StaffIntegrationTest {
                 String.valueOf(frontDeskRole.getId())
         );
 
-        mockMvc.perform(put("/library/admin/staff/" + staffId)
+        mockMvc.perform(put("/api/staff/" + staffId)
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
@@ -255,7 +255,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -273,7 +273,7 @@ public class StaffIntegrationTest {
                 String.valueOf(librarianRole.getId())
         );
 
-        var createResult = mockMvc.perform(post("/library/admin/staff/create")
+        var createResult = mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
@@ -284,14 +284,14 @@ public class StaffIntegrationTest {
                 .get("staffId").asInt();
 
         // Step 3: Deactivate the staff member
-        mockMvc.perform(delete("/library/admin/staff/" + staffId)
+        mockMvc.perform(delete("/api/staff/" + staffId)
                 .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
 
         // Step 4: Verify staff is deactivated (cannot login)
         var deletedStaffLogin = new AuthController.LoginRequest("deletetest@library.local", "password123");
 
-        mockMvc.perform(post("/library/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(deletedStaffLogin)))
                 .andExpect(status().isUnauthorized());
@@ -302,7 +302,7 @@ public class StaffIntegrationTest {
         // Step 1: Front Desk login
         var loginRequest = new AuthController.LoginRequest("frontdesk@library.local", "frontdesk123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -312,7 +312,7 @@ public class StaffIntegrationTest {
                 .get("token").asText();
 
         // Step 2: Front Desk tries to list staff (should fail - no ADMIN:READ permission)
-        mockMvc.perform(get("/library/admin/staff")
+        mockMvc.perform(get("/api/staff")
                 .header("Authorization", "Bearer " + frontDeskToken))
                 .andExpect(status().isForbidden());
     }
@@ -320,7 +320,7 @@ public class StaffIntegrationTest {
     @Test
     void testUnauthorizedAccessWithoutToken() throws Exception {
         // Try to access admin endpoint without token
-        mockMvc.perform(get("/library/admin/staff"))
+        mockMvc.perform(get("/api/staff"))
                 .andExpect(status().isUnauthorized());
 
         // Try to create staff without token
@@ -332,7 +332,7 @@ public class StaffIntegrationTest {
                 String.valueOf(librarianRole.getId())
         );
 
-        mockMvc.perform(post("/library/admin/staff/create")
+        mockMvc.perform(post("/api/staff/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))
                 .andExpect(status().isUnauthorized());
@@ -343,7 +343,7 @@ public class StaffIntegrationTest {
         // Invalid email
         var invalidEmailLogin = new AuthController.LoginRequest("nonexistent@library.local", "password123");
 
-        mockMvc.perform(post("/library/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidEmailLogin)))
                 .andExpect(status().isUnauthorized());
@@ -351,7 +351,7 @@ public class StaffIntegrationTest {
         // Invalid password
         var invalidPasswordLogin = new AuthController.LoginRequest("admin@library.local", "wrongpassword");
 
-        mockMvc.perform(post("/library/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidPasswordLogin)))
                 .andExpect(status().isUnauthorized());
@@ -362,7 +362,7 @@ public class StaffIntegrationTest {
         // Step 1: Admin login
         var loginRequest = new AuthController.LoginRequest("admin@library.local", "admin123");
 
-        var loginResult = mockMvc.perform(post("/library/auth/login")
+        var loginResult = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -381,7 +381,7 @@ public class StaffIntegrationTest {
         );
 
         // This should fail with conflict or bad request
-        mockMvc.perform(post("/library/admin/staff/create")
+        mockMvc.perform(post("/api/staff/create")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createStaffRequest)))

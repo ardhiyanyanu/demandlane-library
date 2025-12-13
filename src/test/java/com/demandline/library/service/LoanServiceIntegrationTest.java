@@ -161,7 +161,7 @@ public class LoanServiceIntegrationTest {
         var exception = assertThrows(IllegalArgumentException.class, 
             () -> loanService.loanBooks(loanInput));
 
-        assertThat(exception.getMessage()).contains("already has active loan");
+        assertThat(exception.getMessage()).contains("Member has active loans and cannot borrow more books");
     }
 
     @Test
@@ -412,7 +412,7 @@ public class LoanServiceIntegrationTest {
                     loanService.loanBooks(loanInput);
                     successCount.incrementAndGet();
                 } catch (IllegalArgumentException e) {
-                    if (e.getMessage().contains("already has active loan")) {
+                    if (e.getMessage().contains("Member has active loans and cannot borrow more books")) {
                         errorCount.incrementAndGet();
                     } else {
                         throw e;
