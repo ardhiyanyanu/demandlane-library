@@ -2,17 +2,17 @@
 
 ## Overview
 
-This document outlines the design and architecture of the Library Management System. The system is built to manage library operations including book inventory, user management, and borrowing/returning of books.
+This document outlines the design and architecture of the Library Management System. The system is built to manage library operations including bookEntity inventory, user management, and borrowing/returning of bookEntities.
 
 ## System Assumptions
 - This system is intended for use by library staff and registered members.
-- This is offline library management system, so person go to library and library staff process with borrow and return books. member cannot do self borrow or self return to ensure book returned in good condition.
-- Library staff have administrative privileges to manage books, members, and users.
+- This is offline library management system, so person go to library and library staff process with borrow and return bookEntities. member cannot do self borrow or self return to ensure bookEntity returned in good condition.
+- Library staff have administrative privileges to manage bookEntities, members, and users.
 - Library staff separated to several roles:
   - Admin: Full access to all system functionalities, can add new library staff.
-  - Librarian: Manage book inventory only.
-  - Front Desk Staff: Handle member registrations and book checkouts/returns.
-- Members can search for books, view their borrowing history, and manage their profiles.
+  - Librarian: Manage bookEntity inventory only.
+  - Front Desk Staff: Handle member registrations and bookEntity checkouts/returns.
+- Members can search for bookEntities, view their borrowing history, and manage their profiles.
 - Members can self-register through the system.
 
 ## User Journey
@@ -24,9 +24,9 @@ This document outlines the design and architecture of the Library Management Sys
 
 ### Book Management
 - Librarian logs in and get JWT token.
-- Librarian adds new books to the inventory with details such as title, author, ISBN, and quantity.
-- Librarian updates book information or removes books from the inventory.
-- Librarian views the list of all books in the inventory.
+- Librarian adds new bookEntities to the inventory with details such as title, author, ISBN, and quantity.
+- Librarian updates bookEntity information or removes bookEntities from the inventory.
+- Librarian views the list of all bookEntities in the inventory.
 
 ### Member Management
 - Front Desk Staff logs in and get JWT token.
@@ -36,23 +36,23 @@ This document outlines the design and architecture of the Library Management Sys
 
 ### Borrowing Books
 - Front Desk Staff searches for a member and system return if this user can borrow.
-- Front Desk Staff searches for books in system and system check with book record.
-- Front Desk Staff checks out books to the member, updating the inventory and member's borrowing history
+- Front Desk Staff searches for bookEntities in system and system check with bookEntity record.
+- Front Desk Staff checks out bookEntities to the member, updating the inventory and member's borrowing history
 
 ### Returning Books
 - Front Desk Staff searches for a member and system return if this user can return.
-- Front Desk Staff processes the return of books, updating the inventory and member's borrowing history.
-- System checks for overdue books and applies any necessary fines to the member's account.
+- Front Desk Staff processes the return of bookEntities, updating the inventory and member's borrowing history.
+- System checks for overdue bookEntities and applies any necessary fines to the member's account.
 
 ### Member Self-Service
 - Members can register themselves through a web interface.
-- Members can log in to view their borrowing history and current borrowed books.
+- Members can log in to view their borrowing history and current borrowed bookEntities.
 
 ## System Architecture
 - The system is built using Java with Spring Boot framework.
 - RESTful APIs are used for communication between the client and server.
 - JWT (JSON Web Tokens) are used for secure authentication and authorization.
-- A relational database PostgreSQL is used to store book
+- A relational database PostgreSQL is used to store bookEntity
 - Observability is implemented using Prometheus for metrics collection and Grafana for visualization.
 - Swagger is used for API documentation and testing.
 
@@ -98,9 +98,6 @@ Here is table schema for this system:
   - created_at
   - updated_at
 
-## Security Considerations
-
-
 ## API Endpoints
 
 - Authentication:
@@ -112,17 +109,17 @@ Here is table schema for this system:
   - PUT /library/admin/staff/{id}: Update library staff information (permission ADMIN:UPDATE).
   - DELETE /library/admin/staff/{id}: Deactivate library staff account (permission ADMIN:DELETE).
 - Book Management:
-  - POST /library/admin/books: Add a new book (permission BOOK:CREATE).
-  - POST /library/admin/books/csv: Bulk insert and update multiple book (permission BOOK:CREATE).
-  - GET /library/admin/books: List all books (permission BOOK:READ).
-  - PUT /library/admin/books/{id}: Update book information (permission BOOK:UPDATE).
-  - DELETE /library/admin/books/{id}: Remove a book (permission BOOK:DELETE).
+  - POST /library/admin/bookEntities: Add a new bookEntity (permission BOOK:CREATE).
+  - POST /library/admin/bookEntities/csv: Bulk insert and update multiple bookEntity (permission BOOK:CREATE).
+  - GET /library/admin/bookEntities: List all bookEntities (permission BOOK:READ).
+  - PUT /library/admin/bookEntities/{id}: Update bookEntity information (permission BOOK:UPDATE).
+  - DELETE /library/admin/bookEntities/{id}: Remove a bookEntity (permission BOOK:DELETE).
 - Loan Management:
-  - POST /library/admin/loans/borrow: Borrow a book (permission BORROW:CREATE).
-  - POST /library/admin/loans/return: Return a book (permission BORROW:UPDATE).
+  - POST /library/admin/loans/borrow: Borrow a bookEntity (permission BORROW:CREATE).
+  - POST /library/admin/loans/return: Return a bookEntity (permission BORROW:UPDATE).
   - GET /library/admin/loans/member/{memberId}: View member's borrowing history (permission BORROW:READ).
   - GET /library/admin/loans/overdue: List all overdue loans (permission BORROW:READ).
-  - GET /library/admin/loans/book/{bookId}: View all loans for a specific book (permission BORROW:READ).
+  - GET /library/admin/loans/bookEntity/{bookId}: View all loans for a specific bookEntity (permission BORROW:READ).
 - Member Management:
   - GET /library/admin/members: List all members (permission MEMBER:READ).
   - PUT /library/admin/members/{id}: Update member information (permission MEMBER:UPDATE).
@@ -130,12 +127,12 @@ Here is table schema for this system:
 - Member Self-Service:
   - GET /library/member/me/loans: View own borrowing history (permission MEMBER:READ).
 - Public Endpoints:
-  - GET /library/public/books: Search and view available books (no authentication required).
+  - GET /library/public/bookEntities: Search and view available bookEntities (no authentication required).
 
 ## Notable Case Handling
 
-- Prevent double borrowing of the same book. This can heppen if borrowing request is called at same time and implementation have query first and then update data.
-To prevent this, use database transaction with "SELECT ... FOR UPDATE" to lock the book record during the borrowing process.
+- Prevent double borrowing of the same bookEntity. This can happen if borrowing request is called at same time and implementation have query first and then update data.
+To prevent this, use @Lock(LockModeType.PESSIMISTIC_WRITE) to prevent concurrent update.
 - Handle double sending request from client side when front desk staff click borrow or return button multiple times.
 Implement idempotency by generating a unique request ID for each borrow/return operation and storing it
 

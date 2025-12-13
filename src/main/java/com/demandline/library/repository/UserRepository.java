@@ -2,6 +2,8 @@ package com.demandline.library.repository;
 
 import com.demandline.library.repository.model.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -32,5 +34,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
      * @param roleName the role name
      * @return List of users with the specified role
      */
-    List<UserEntity> findByRoleNameAndActiveTrue(String roleName);
+    @Query("SELECT u FROM UserEntity u WHERE u.roleEntity.name = :roleName AND u.active = TRUE")
+    List<UserEntity> findByRoleNameAndActiveTrue(@Param("roleName") String roleName);
 }

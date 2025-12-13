@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -43,6 +44,9 @@ public class UserEntityServiceIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void testRegisterAndRetrieveUser() {
@@ -110,7 +114,7 @@ public class UserEntityServiceIntegrationTest {
         assertThat(updatedUser.name()).isEqualTo("Updated Name");
         assertThat(updatedUser.email()).isEqualTo("updated.email@local");
         assertThat(updatedUser.role().name()).isEqualTo("ADMIN");
-        assertThat(updatedUser.password()).isEqualTo("newpassword456");
+        assertThat(passwordEncoder.matches("newpassword456", updatedUser.password())).isTrue();
     }
 
     @Test

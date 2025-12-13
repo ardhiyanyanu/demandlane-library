@@ -57,7 +57,7 @@ public class UserSeeder implements CommandLineRunner {
                 .name("Administrator")
                 .email(email)
                 .password(passwordEncoder.encode("admin123"))
-                .role(adminRole)
+                .roleEntity(adminRole)
                 .active(true)
                 .build();
 
@@ -80,7 +80,7 @@ public class UserSeeder implements CommandLineRunner {
                 .name("Sample Librarian")
                 .email(email)
                 .password(passwordEncoder.encode("librarian123"))
-                .role(librarianRole)
+                .roleEntity(librarianRole)
                 .active(true)
                 .build();
 
@@ -103,7 +103,7 @@ public class UserSeeder implements CommandLineRunner {
                 .name("Sample Front Desk Staff")
                 .email(email)
                 .password(passwordEncoder.encode("frontdesk123"))
-                .role(frontDeskRole)
+                .roleEntity(frontDeskRole)
                 .active(true)
                 .build();
 

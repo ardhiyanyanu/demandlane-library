@@ -10,7 +10,6 @@ import com.demandline.library.service.model.input.UserUpdateInput;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public class UserService {
                 .name(userInput.name())
                 .email(userInput.email())
                 .password(passwordEncoder.encode(userInput.password()))
-                .role(roleEntity)
+                .roleEntity(roleEntity)
                 .active(true)
                 .build();
         var saved = userRepository.save(entity);
@@ -59,7 +58,7 @@ public class UserService {
         if (updatedUser.roleId() != null) {
             var roleEntity = roleRepository.findById(Integer.valueOf(updatedUser.roleId()))
                     .orElseThrow(() -> new IllegalArgumentException("Role not found"));
-            entity.setRole(roleEntity);
+            entity.setRoleEntity(roleEntity);
         }
         var saved = userRepository.save(entity);
         return mapToUser(saved);
@@ -77,7 +76,7 @@ public class UserService {
     public List<User> getAllUsers(boolean includeMembers, int limit, int offset) {
         var users = userRepository.findAllByActiveTrue();
         var filtered = users.stream()
-                .filter(u -> includeMembers || !"Member".equalsIgnoreCase(u.getRole().getName()))
+                .filter(u -> includeMembers || !"Member".equalsIgnoreCase(u.getRoleEntity().getName()))
                 .skip(offset)
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -95,11 +94,11 @@ public class UserService {
                 userEntity.getEmail(),
                 userEntity.getPassword(),
                 new Role(
-                        userEntity.getRole().getId(),
-                        userEntity.getRole().getName(),
-                        userEntity.getRole().getPermissions(),
-                        userEntity.getRole().getCreatedAt(),
-                        userEntity.getRole().getUpdatedAt()
+                        userEntity.getRoleEntity().getId(),
+                        userEntity.getRoleEntity().getName(),
+                        userEntity.getRoleEntity().getPermissions(),
+                        userEntity.getRoleEntity().getCreatedAt(),
+                        userEntity.getRoleEntity().getUpdatedAt()
                 ),
                 userEntity.getCreatedAt(),
                 userEntity.getUpdatedAt(),
