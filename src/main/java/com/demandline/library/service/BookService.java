@@ -1,5 +1,6 @@
 package com.demandline.library.service;
 
+import com.demandline.library.observability.MetricsService;
 import com.demandline.library.repository.BookRepository;
 import com.demandline.library.repository.LoanRepository;
 import com.demandline.library.repository.model.BookEntity;
@@ -8,6 +9,8 @@ import com.demandline.library.service.model.BookBulkImportResponse;
 import com.demandline.library.service.model.filter.BookFilter;
 import com.demandline.library.service.model.input.BookInput;
 import com.demandline.library.service.model.input.BookUpdateInput;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +28,14 @@ import java.util.stream.Collectors;
 public class BookService {
     private final BookRepository bookRepository;
     private final LoanRepository loanRepository;
+    private final MetricsService metricsService;
 
-    public BookService(BookRepository bookRepository, LoanRepository loanRepository) {
+    public BookService(BookRepository bookRepository,
+                      LoanRepository loanRepository,
+                      MetricsService metricsService) {
         this.bookRepository = bookRepository;
         this.loanRepository = loanRepository;
+        this.metricsService = metricsService;
     }
 
     @Transactional
@@ -47,6 +54,7 @@ public class BookService {
                 .build();
 
         var saved = bookRepository.save(bookEntity);
+        metricsService.incrementBooksCreated();
         log.info("Created book: {} (ISBN: {})", saved.getTitle(), saved.getIsbn());
         return mapToBook(saved);
     }
@@ -166,6 +174,7 @@ public class BookService {
         }
 
         var saved = bookRepository.save(bookEntity);
+        metricsService.incrementBooksUpdated();
         log.info("Updated book: {} (ID: {})", saved.getTitle(), saved.getId());
         return mapToBook(saved);
     }
@@ -187,6 +196,7 @@ public class BookService {
         }
 
         bookRepository.deleteById(id);
+        metricsService.incrementBooksDeleted();
         log.info("Deleted book: {} (ID: {})", bookEntity.getTitle(), bookEntity.getId());
     }
 

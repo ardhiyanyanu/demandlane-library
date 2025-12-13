@@ -1,5 +1,6 @@
 package com.demandline.library.service;
 
+import com.demandline.library.observability.MetricsService;
 import com.demandline.library.repository.UserRepository;
 import com.demandline.library.repository.RoleRepository;
 import com.demandline.library.repository.model.UserEntity;
@@ -20,11 +21,32 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MetricsService metricsService;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                      RoleRepository roleRepository,
+                      PasswordEncoder passwordEncoder,
+                      MetricsService metricsService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.metricsService = metricsService;
+    }
+
+    /**
+     * Track successful login
+     * Should be called from AuthController after successful authentication
+     */
+    public void trackLoginSuccess() {
+        metricsService.incrementLoginSuccess();
+    }
+
+    /**
+     * Track failed login
+     * Should be called from AuthController after failed authentication
+     */
+    public void trackLoginFailure() {
+        metricsService.incrementLoginFailure();
     }
 
     public boolean isEmailRegistered(String email) {
@@ -44,6 +66,7 @@ public class UserService {
                 .active(true)
                 .build();
         var saved = userRepository.save(entity);
+        metricsService.incrementUserRegistration();
         return mapToUser(saved);
     }
 

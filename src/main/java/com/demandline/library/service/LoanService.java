@@ -15,6 +15,7 @@ import com.demandline.library.service.model.Member;
 import com.demandline.library.service.model.filter.LoanFilter;
 import com.demandline.library.service.model.input.LoanInput;
 import com.demandline.library.service.model.input.ReturnInput;
+import com.demandline.library.observability.MetricsService;
 import com.demandline.library.service.util.RedisLockUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -43,6 +44,7 @@ public class LoanService {
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisLockUtil redisLockUtil;
     private final ObjectMapper objectMapper;
+    private final MetricsService metricsService;
 
     public LoanService(BookService bookService,
                        MemberService memberService,
@@ -52,7 +54,8 @@ public class LoanService {
                        MemberRepository memberRepository,
                        RedisTemplate<String, String> redisTemplate,
                        RedisLockUtil redisLockUtil,
-                       ObjectMapper objectMapper) {
+                       ObjectMapper objectMapper,
+                       MetricsService metricsService) {
         this.bookService = bookService;
         this.memberService = memberService;
         this.libraryConfiguration = libraryConfiguration;
@@ -62,6 +65,7 @@ public class LoanService {
         this.redisTemplate = redisTemplate;
         this.redisLockUtil = redisLockUtil;
         this.objectMapper = objectMapper;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -72,91 +76,110 @@ public class LoanService {
      */
     @Transactional
     public Loan loanBooks(LoanInput loanInput) {
-        String lockKey = "member:" + loanInput.memberId();
-        String lockValue = UUID.randomUUID().toString();
+        return metricsService.getLoanOperationTimer().record(() -> {
+            String lockKey = "member:" + loanInput.memberId();
+            String lockValue = UUID.randomUUID().toString();
 
-        // Try to acquire lock, wait if another process is using it
-        if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
-            // Wait for the lock to be released
-            if (!redisLockUtil.waitForLock(lockKey, LOCK_WAIT_TIMEOUT_SECONDS)) {
-                throw new IllegalStateException("Timeout waiting for loan lock to be released");
-            }
-            // Try to acquire lock again after waiting
+            // Try to acquire lock, wait if another process is using it
             if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
-                throw new IllegalStateException("Failed to acquire loan lock after waiting");
+                // Wait for the lock to be released
+                if (!redisLockUtil.waitForLock(lockKey, LOCK_WAIT_TIMEOUT_SECONDS)) {
+                    metricsService.incrementLoanFailure();
+                    throw new IllegalStateException("Timeout waiting for loan lock to be released");
+                }
+                // Try to acquire lock again after waiting
+                if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
+                    metricsService.incrementLoanFailure();
+                    throw new IllegalStateException("Failed to acquire loan lock after waiting");
+                }
             }
-        }
 
-        try {
-            // Fetch member
-            MemberEntity memberEntity = memberRepository.findById(loanInput.memberId())
-                    .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+            try {
+                // Fetch member
+                MemberEntity memberEntity = memberRepository.findById(loanInput.memberId())
+                        .orElseThrow(() -> {
+                            metricsService.incrementLoanFailure();
+                            return new IllegalArgumentException("Member not found");
+                        });
 
-            // Validate and process each book
-            List<LoanEntity> loanEntities = loanInput.bookIds().stream()
-                    .map(bookId -> {
-                        // Check if member already has active loan for this book
-                        if (loanRepository.hasActiveLoan(loanInput.memberId(), bookId)) {
-                            throw new IllegalArgumentException("Member already has active loan for book ID: " + bookId);
-                        }
+                // Validate and process each book
+                List<LoanEntity> loanEntities = loanInput.bookIds().stream()
+                        .map(bookId -> {
+                            // Check if member already has active loan for this book
+                            if (loanRepository.hasActiveLoan(loanInput.memberId(), bookId)) {
+                                metricsService.incrementLoanFailure();
+                                throw new IllegalArgumentException("Member already has active loan for book ID: " + bookId);
+                            }
 
-                        // Fetch book with pessimistic lock to prevent race conditions
-                        BookEntity bookEntity = bookRepository.findByIdWithLock(bookId)
-                                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+                            // Fetch book with pessimistic lock to prevent race conditions
+                            BookEntity bookEntity = bookRepository.findByIdWithLock(bookId)
+                                    .orElseThrow(() -> {
+                                        metricsService.incrementLoanFailure();
+                                        return new IllegalArgumentException("Book not found: " + bookId);
+                                    });
 
-                        // Check availability (prevent race condition with lock)
-                        if (bookEntity.getAvailableCopies() <= 0) {
-                            throw new IllegalArgumentException("Book not available: " + bookEntity.getTitle());
-                        }
+                            // Check availability (prevent race condition with lock)
+                            if (bookEntity.getAvailableCopies() <= 0) {
+                                metricsService.incrementLoanFailure();
+                                throw new IllegalArgumentException("Book not available: " + bookEntity.getTitle());
+                            }
 
-                        // Decrease available copies
-                        bookEntity.setAvailableCopies(bookEntity.getAvailableCopies() - 1);
-                        bookRepository.save(bookEntity);
+                            // Decrease available copies
+                            bookEntity.setAvailableCopies(bookEntity.getAvailableCopies() - 1);
+                            bookRepository.save(bookEntity);
 
-                        // Create loan record
-                        LocalDateTime now = LocalDateTime.now();
-                        LocalDateTime dueDate = now.plusDays(libraryConfiguration.getLoanPeriodDays());
+                            // Create loan record
+                            LocalDateTime now = LocalDateTime.now();
+                            LocalDateTime dueDate = now.plusDays(libraryConfiguration.getLoanPeriodDays());
 
-                        return LoanEntity.builder()
-                                .memberEntity(memberEntity)
-                                .bookEntity(bookEntity)
-                                .borrowDate(now)
-                                .dueDate(dueDate)
-                                .build();
-                    })
-                    .collect(Collectors.toList());
+                            return LoanEntity.builder()
+                                    .memberEntity(memberEntity)
+                                    .bookEntity(bookEntity)
+                                    .borrowDate(now)
+                                    .dueDate(dueDate)
+                                    .build();
+                        })
+                        .collect(Collectors.toList());
 
-            // Save all loans
-            loanRepository.saveAll(loanEntities);
+                // Save all loans
+                loanRepository.saveAll(loanEntities);
 
-            // Build and return response
-            Member member = new Member(
-                    memberEntity.getId(),
-                    null, // User will be populated separately if needed
-                    memberEntity.getAddress(),
-                    memberEntity.getPhoneNumber(),
-                    memberEntity.getCreatedAt(),
-                    memberEntity.getUpdatedAt(),
-                    memberEntity.getIsActive()
-            );
+                // Track metrics
+                metricsService.incrementBooksLoaned(loanEntities.size());
+                metricsService.incrementLoanSuccess();
 
-            List<LoanBook> loanBooks = loanEntities.stream()
-                    .map(loan -> new LoanBook(
-                            loan.getId(),
-                            mapEntityToBook(loan.getBookEntity()),
-                            loan.getBorrowDate(),
-                            loan.getReturnDate(),
-                            loan.getDueDate(),
-                            loan.getCreatedAt(),
-                            loan.getUpdatedAt()
-                    ))
-                    .collect(Collectors.toList());
+                // Build and return response
+                Member member = new Member(
+                        memberEntity.getId(),
+                        null, // User will be populated separately if needed
+                        memberEntity.getAddress(),
+                        memberEntity.getPhoneNumber(),
+                        memberEntity.getCreatedAt(),
+                        memberEntity.getUpdatedAt(),
+                        memberEntity.getIsActive()
+                );
 
-            return new Loan(member, loanBooks);
-        } finally {
-            // Always release the lock
-            redisLockUtil.releaseLock(lockKey, lockValue);
-        }
+                List<LoanBook> loanBooks = loanEntities.stream()
+                        .map(loan -> new LoanBook(
+                                loan.getId(),
+                                mapEntityToBook(loan.getBookEntity()),
+                                loan.getBorrowDate(),
+                                loan.getReturnDate(),
+                                loan.getDueDate(),
+                                loan.getCreatedAt(),
+                                loan.getUpdatedAt()
+                        ))
+                        .collect(Collectors.toList());
+
+                return new Loan(member, loanBooks);
+            } catch (RuntimeException e) {
+                metricsService.incrementLoanFailure();
+                throw e;
+            } finally {
+                // Always release the lock
+                redisLockUtil.releaseLock(lockKey, lockValue);
+            }
+        });
     }
 
     /**
@@ -198,84 +221,103 @@ public class LoanService {
      */
     @Transactional
     public Loan returnBooks(ReturnInput returnInput) {
-        String lockKey = "member:" + returnInput.memberId();
-        String lockValue = UUID.randomUUID().toString();
+        return metricsService.getReturnOperationTimer().record(() -> {
+            String lockKey = "member:" + returnInput.memberId();
+            String lockValue = UUID.randomUUID().toString();
 
-        // Try to acquire lock, wait if another process is using it
-        if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
-            // Wait for the lock to be released
-            if (!redisLockUtil.waitForLock(lockKey, LOCK_WAIT_TIMEOUT_SECONDS)) {
-                throw new IllegalStateException("Timeout waiting for return lock to be released");
-            }
-            // Try to acquire lock again after waiting
+            // Try to acquire lock, wait if another process is using it
             if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
-                throw new IllegalStateException("Failed to acquire return lock after waiting");
+                // Wait for the lock to be released
+                if (!redisLockUtil.waitForLock(lockKey, LOCK_WAIT_TIMEOUT_SECONDS)) {
+                    metricsService.incrementReturnFailure();
+                    throw new IllegalStateException("Timeout waiting for return lock to be released");
+                }
+                // Try to acquire lock again after waiting
+                if (!redisLockUtil.acquireLock(lockKey, lockValue)) {
+                    metricsService.incrementReturnFailure();
+                    throw new IllegalStateException("Failed to acquire return lock after waiting");
+                }
             }
-        }
 
-        try {
-            // Fetch member
-            MemberEntity memberEntity = memberRepository.findById(returnInput.memberId())
-                    .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+            try {
+                // Fetch member
+                MemberEntity memberEntity = memberRepository.findById(returnInput.memberId())
+                        .orElseThrow(() -> {
+                            metricsService.incrementReturnFailure();
+                            return new IllegalArgumentException("Member not found");
+                        });
 
-            LocalDateTime returnDate = LocalDateTime.now();
-            List<LoanEntity> returnedLoans = returnInput.returnPairInputs().stream()
-                    .map(returnPair -> {
-                        // Fetch loan
-                        LoanEntity loan = loanRepository.findById(returnPair.loanId())
-                                .orElseThrow(() -> new IllegalArgumentException("Loan not found: " + returnPair.loanId()));
+                LocalDateTime returnDate = LocalDateTime.now();
+                List<LoanEntity> returnedLoans = returnInput.returnPairInputs().stream()
+                        .map(returnPair -> {
+                            // Fetch loan
+                            LoanEntity loan = loanRepository.findById(returnPair.loanId())
+                                    .orElseThrow(() -> {
+                                        metricsService.incrementReturnFailure();
+                                        return new IllegalArgumentException("Loan not found: " + returnPair.loanId());
+                                    });
 
-                        // Verify loan belongs to member
-                        if (!loan.getMemberEntity().getId().equals(returnInput.memberId())) {
-                            throw new IllegalArgumentException("Loan does not belong to this member");
-                        }
+                            // Verify loan belongs to member
+                            if (!loan.getMemberEntity().getId().equals(returnInput.memberId())) {
+                                metricsService.incrementReturnFailure();
+                                throw new IllegalArgumentException("Loan does not belong to this member");
+                            }
 
-                        // Check if already returned
-                        if (loan.getReturnDate() != null) {
-                            throw new IllegalArgumentException("Loan already returned: " + returnPair.loanId());
-                        }
+                            // Check if already returned
+                            if (loan.getReturnDate() != null) {
+                                metricsService.incrementReturnFailure();
+                                throw new IllegalArgumentException("Loan already returned: " + returnPair.loanId());
+                            }
 
-                        // Fetch book to restore available copies
-                        BookEntity bookEntity = loan.getBookEntity();
+                            // Fetch book to restore available copies
+                            BookEntity bookEntity = loan.getBookEntity();
 
-                        // Increase available copies
-                        bookEntity.setAvailableCopies(bookEntity.getAvailableCopies() + 1);
-                        bookRepository.save(bookEntity);
+                            // Increase available copies
+                            bookEntity.setAvailableCopies(bookEntity.getAvailableCopies() + 1);
+                            bookRepository.save(bookEntity);
 
-                        // Update loan with return date
-                        loan.setReturnDate(returnDate);
-                        return loanRepository.save(loan);
-                    })
-                    .collect(Collectors.toList());
+                            // Update loan with return date
+                            loan.setReturnDate(returnDate);
+                            return loanRepository.save(loan);
+                        })
+                        .collect(Collectors.toList());
 
-            // Build and return response
-            Member member = new Member(
-                    memberEntity.getId(),
-                    null, // User will be populated separately if needed
-                    memberEntity.getAddress(),
-                    memberEntity.getPhoneNumber(),
-                    memberEntity.getCreatedAt(),
-                    memberEntity.getUpdatedAt(),
-                    memberEntity.getIsActive()
-            );
+                // Track metrics
+                metricsService.incrementBooksReturned(returnedLoans.size());
+                metricsService.incrementReturnSuccess();
 
-            List<LoanBook> loanBooks = returnedLoans.stream()
-                    .map(loan -> new LoanBook(
-                            loan.getId(),
-                            mapEntityToBook(loan.getBookEntity()),
-                            loan.getBorrowDate(),
-                            loan.getReturnDate(),
-                            loan.getDueDate(),
-                            loan.getCreatedAt(),
-                            loan.getUpdatedAt()
-                    ))
-                    .collect(Collectors.toList());
+                // Build and return response
+                Member member = new Member(
+                        memberEntity.getId(),
+                        null, // User will be populated separately if needed
+                        memberEntity.getAddress(),
+                        memberEntity.getPhoneNumber(),
+                        memberEntity.getCreatedAt(),
+                        memberEntity.getUpdatedAt(),
+                        memberEntity.getIsActive()
+                );
 
-            return new Loan(member, loanBooks);
-        } finally {
-            // Always release the lock
-            redisLockUtil.releaseLock(lockKey, lockValue);
-        }
+                List<LoanBook> loanBooks = returnedLoans.stream()
+                        .map(loan -> new LoanBook(
+                                loan.getId(),
+                                mapEntityToBook(loan.getBookEntity()),
+                                loan.getBorrowDate(),
+                                loan.getReturnDate(),
+                                loan.getDueDate(),
+                                loan.getCreatedAt(),
+                                loan.getUpdatedAt()
+                        ))
+                        .collect(Collectors.toList());
+
+                return new Loan(member, loanBooks);
+            } catch (RuntimeException e) {
+                metricsService.incrementReturnFailure();
+                throw e;
+            } finally {
+                // Always release the lock
+                redisLockUtil.releaseLock(lockKey, lockValue);
+            }
+        });
     }
 
     /**

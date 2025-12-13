@@ -61,6 +61,7 @@ public class AuthController {
 
             if (userOptional.isEmpty()) {
                 logger.warn("User not found: {}", request.email());
+                userService.trackLoginFailure();
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("", "", "", 0L));
             }
@@ -70,6 +71,7 @@ public class AuthController {
             // Check if user is active
             if (!user.isActive()) {
                 logger.warn("User account is inactive: {}", request.email());
+                userService.trackLoginFailure();
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("", "", "", 0L));
             }
@@ -77,6 +79,7 @@ public class AuthController {
             // Validate password
             if (!passwordEncoder.matches(request.password(), user.password())) {
                 logger.warn("Invalid password for user: {}", request.email());
+                userService.trackLoginFailure();
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("", "", "", 0L));
             }
@@ -91,6 +94,7 @@ public class AuthController {
             String token = jwtUtil.generateToken(user.id(), user.email(), role, permissionsList);
 
             logger.info("User logged in successfully: {}", request.email());
+            userService.trackLoginSuccess();
 
             return ResponseEntity.ok(
                 new LoginResponse(token, user.email(), role, 86400000L / 1000) // 24 hours in seconds
@@ -98,6 +102,7 @@ public class AuthController {
 
         } catch (Exception e) {
             logger.error("Login error: {}", e.getMessage());
+            userService.trackLoginFailure();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new LoginResponse("", "", "", 0L));
         }
