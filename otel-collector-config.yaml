@@ -46,7 +46,7 @@ exporters:
   otlphttp/grafana:
     endpoint: https://otlp-gateway-prod-ap-southeast-2.grafana.net/otlp
     headers:
-      Authorization: Basic Z2xjX2V5SnZJam9pTVRZeE56RXlPQ0lzSW00aU9pSm5jbUZtWVc1aExYUnZhMlZ1TFhSbGMzUWlMQ0pySWpvaU1teHdlVFJ2V1d3eVlWbGtOVFl4ZGprNU9VWlFkRFJSSWl3aWJTSTZleUp5SWpvaWNISnZaQzFoY0MxemIzVjBhR1ZoYzNRdE1pSjlmUT09OjE0Njg2OTE=
+      Authorization: "Basic MTQ2ODY5MTpnbGNfZXlKdklqb2lNVFl4TnpFeU9DSXNJbTRpT2lKc2FXSnlZWEo1SWl3aWF5STZJalEzVUVVd1JWaG9NakkwUzJJek4zaGpXbTVSYWpaQ09TSXNJbTBpT25zaWNpSTZJbkJ5YjJRdFlYQXRjMjkxZEdobFlYTjBMVElpZlgwPQ=="
 
 
   # Debug exporter for troubleshooting (optional)
